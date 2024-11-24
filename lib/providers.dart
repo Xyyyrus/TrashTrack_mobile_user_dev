@@ -5,6 +5,7 @@ import 'package:trashtrack_user/blocs/announcement/get_announcements/get_announc
 import 'package:trashtrack_user/blocs/auth/forgot/forgot_bloc.dart';
 import 'package:trashtrack_user/blocs/auth/login/login_bloc.dart';
 import 'package:trashtrack_user/blocs/auth/logout/logout_bloc.dart';
+import 'package:trashtrack_user/blocs/auth/register/register_bloc.dart';
 import 'package:trashtrack_user/blocs/comment/add_comment/add_comment_bloc.dart';
 import 'package:trashtrack_user/blocs/comment/delete_comment/delete_comment_bloc.dart';
 import 'package:trashtrack_user/blocs/comment/edit_comment/edit_comment_bloc.dart';
@@ -32,6 +33,7 @@ import 'package:trashtrack_user/data/sources/announcement/get_announcements_sour
 import 'package:trashtrack_user/data/sources/auth/forgot_source.dart';
 import 'package:trashtrack_user/data/sources/auth/login_source.dart';
 import 'package:trashtrack_user/data/sources/auth/logout_source.dart';
+import 'package:trashtrack_user/data/sources/auth/register_source.dart';
 import 'package:trashtrack_user/data/sources/comment/add_comment_source.dart';
 import 'package:trashtrack_user/data/sources/comment/delete_comment_source.dart';
 import 'package:trashtrack_user/data/sources/comment/edit_comment_source.dart';
@@ -57,6 +59,12 @@ dynamic _repositoryProviders() {
         loginSource: LoginSource(),
         logoutSource: LogoutSource(),
         forgotSource: ForgotSource(),
+        registerSource: RegisterSource(),
+      ),
+    ),
+    BlocProvider(
+      create: (BuildContext context) => RegisterBloc(
+        context.read<AuthRepository>(),
       ),
     ),
     RepositoryProvider(

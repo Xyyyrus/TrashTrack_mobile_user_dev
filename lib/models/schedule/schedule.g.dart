@@ -11,7 +11,7 @@ _$ScheduleImpl _$$ScheduleImplFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       routeId: json['routeId'] as String,
       fleetId: json['fleetId'] as String,
-      driverId: json['driverId'] as String,
+      driverId: json['driverId'] as String?,
       day: json['day'] as String,
       time: const TimestampConverter()
           .fromJson(json['time'] as Map<String, dynamic>),

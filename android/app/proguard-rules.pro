@@ -29,3 +29,12 @@
 
 # @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+# proguard-rules.pro
+-assumenosideeffects class android.util.Log {
+    public static int d(...);
+    public static int w(...);
+    public static int v(...);
+    public static int i(...);
+    public static int e(...);
+}
