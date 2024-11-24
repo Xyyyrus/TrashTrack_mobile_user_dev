@@ -8,7 +8,7 @@ import 'package:trashtrack_user/models/profile/profile.dart';
 import 'package:trashtrack_user/pages/protected/profile/map_page.dart';
 import 'package:trashtrack_user/validators/firstname_validator.dart';
 import 'package:trashtrack_user/validators/lastname_validator.dart';
-import 'package:trashtrack_user/widgets/custom_app_bar.dart';
+
 import 'package:trashtrack_user/widgets/custom_dropdown_button.dart';
 import 'package:trashtrack_user/widgets/custom_elevated_button.dart';
 import 'package:trashtrack_user/widgets/custom_text_field.dart';
@@ -180,10 +180,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 const SizedBox(height: 15),
                 CustomDropdownButton(
                   value: _selectedBarangay,
+                  hint: 'Select an option',
                   options: _routeList,
                   onChanged: (value) => _changeSelectedBarangay(value),
+                  labelText: 'Routes', // Set your label here
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 45),
                 buildMapButton(),
                 const SizedBox(height: 15),
                 buildUPBC(),

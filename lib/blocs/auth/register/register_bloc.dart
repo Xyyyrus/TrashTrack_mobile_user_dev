@@ -5,24 +5,24 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:trashtrack_user/data/repositories/auth_repository.dart';
 import 'package:trashtrack_user/models/credential/credential.dart';
 
-part 'login_event.dart';
-part 'login_state.dart';
+part 'register_event.dart';
+part 'register_state.dart';
 
 typedef ESST = Either<String, String>;
 
-class LoginBloc extends Bloc<LoginEvent, LoginState> {
+class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   final AuthRepository repository;
 
-  LoginBloc(this.repository) : super(LoginInitialState()) {
-    on<LoginAccountEvent>((event, emit) async {
-      emit(LoginProcessingState());
+  RegisterBloc(this.repository) : super(RegisterInitialState()) {
+    on<RegisterAccountEvent>((event, emit) async {
+      emit(RegisterProcessingState());
 
-      final ESST result = await repository.login(event.credential);
+      final ESST result = await repository.register(event.credential);
 
       result.fold((String l) {
-        emit(LoginErrorState(l));
+        emit(RegisterErrorState(l));
       }, (String r) {
-        emit(LoginSuccessfulState(r));
+        emit(RegisterSuccessfulState(r));
       });
     });
   }

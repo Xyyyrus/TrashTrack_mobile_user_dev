@@ -23,7 +23,8 @@ mixin _$Schedule {
   String get id => throw _privateConstructorUsedError;
   String get routeId => throw _privateConstructorUsedError;
   String get fleetId => throw _privateConstructorUsedError;
-  String get driverId => throw _privateConstructorUsedError;
+  String? get driverId =>
+      throw _privateConstructorUsedError; // Made this field optional by using String? instead of required String
   String get day => throw _privateConstructorUsedError;
   @TimestampConverter()
   Timestamp get time => throw _privateConstructorUsedError;
@@ -53,7 +54,7 @@ abstract class $ScheduleCopyWith<$Res> {
       {String id,
       String routeId,
       String fleetId,
-      String driverId,
+      String? driverId,
       String day,
       @TimestampConverter() Timestamp time,
       String? routeName,
@@ -80,7 +81,7 @@ class _$ScheduleCopyWithImpl<$Res, $Val extends Schedule>
     Object? id = null,
     Object? routeId = null,
     Object? fleetId = null,
-    Object? driverId = null,
+    Object? driverId = freezed,
     Object? day = null,
     Object? time = null,
     Object? routeName = freezed,
@@ -101,10 +102,10 @@ class _$ScheduleCopyWithImpl<$Res, $Val extends Schedule>
           ? _value.fleetId
           : fleetId // ignore: cast_nullable_to_non_nullable
               as String,
-      driverId: null == driverId
+      driverId: freezed == driverId
           ? _value.driverId
           : driverId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       day: null == day
           ? _value.day
           : day // ignore: cast_nullable_to_non_nullable
@@ -145,7 +146,7 @@ abstract class _$$ScheduleImplCopyWith<$Res>
       {String id,
       String routeId,
       String fleetId,
-      String driverId,
+      String? driverId,
       String day,
       @TimestampConverter() Timestamp time,
       String? routeName,
@@ -170,7 +171,7 @@ class __$$ScheduleImplCopyWithImpl<$Res>
     Object? id = null,
     Object? routeId = null,
     Object? fleetId = null,
-    Object? driverId = null,
+    Object? driverId = freezed,
     Object? day = null,
     Object? time = null,
     Object? routeName = freezed,
@@ -191,10 +192,10 @@ class __$$ScheduleImplCopyWithImpl<$Res>
           ? _value.fleetId
           : fleetId // ignore: cast_nullable_to_non_nullable
               as String,
-      driverId: null == driverId
+      driverId: freezed == driverId
           ? _value.driverId
           : driverId // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       day: null == day
           ? _value.day
           : day // ignore: cast_nullable_to_non_nullable
@@ -230,7 +231,7 @@ class _$ScheduleImpl implements _Schedule {
       {required this.id,
       required this.routeId,
       required this.fleetId,
-      required this.driverId,
+      this.driverId,
       required this.day,
       @TimestampConverter() required this.time,
       this.routeName,
@@ -250,7 +251,8 @@ class _$ScheduleImpl implements _Schedule {
   @override
   final String fleetId;
   @override
-  final String driverId;
+  final String? driverId;
+// Made this field optional by using String? instead of required String
   @override
   final String day;
   @override
@@ -344,7 +346,7 @@ abstract class _Schedule implements Schedule {
       {required final String id,
       required final String routeId,
       required final String fleetId,
-      required final String driverId,
+      final String? driverId,
       required final String day,
       @TimestampConverter() required final Timestamp time,
       final String? routeName,
@@ -362,7 +364,8 @@ abstract class _Schedule implements Schedule {
   @override
   String get fleetId;
   @override
-  String get driverId;
+  String?
+      get driverId; // Made this field optional by using String? instead of required String
   @override
   String get day;
   @override

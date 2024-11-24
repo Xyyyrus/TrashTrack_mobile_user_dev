@@ -15,7 +15,7 @@ class CustomDropdownButton extends StatelessWidget {
   final String? hint;
   final List<Option> options;
   final void Function(String?)? onChanged;
-  final String? labelText; // Added labelText for consistency
+  final String? labelText; // Label text
 
   OutlineInputBorder borderStyle(Color borderColor) {
     return OutlineInputBorder(
@@ -60,7 +60,8 @@ class CustomDropdownButton extends StatelessWidget {
             hint: hint != null
                 ? Center(
                     child:
-                        Text(hint!, style: const TextStyle(color: Colors.grey)))
+                        Text(hint!, style: const TextStyle(color: Colors.grey)),
+                  )
                 : null,
             items: options.map((Option option) {
               return DropdownMenuItem<String>(
@@ -80,16 +81,8 @@ class CustomDropdownButton extends StatelessWidget {
             icon: const Icon(Icons.arrow_drop_down), // Custom dropdown icon
           ),
         ),
-        // Underline for the dropdown
-        Container(
-          margin: const EdgeInsets.only(top: 8),
-          decoration: BoxDecoration(
-              // border: Border(
-              //   bottom: BorderSide(
-              //       color: Colors.grey, width: 1), // Border at the bottom
-              // ),
-              ),
-        ),
+        // Optional: Add some spacing below the dropdown
+        const SizedBox(height: 8),
       ],
     );
   }

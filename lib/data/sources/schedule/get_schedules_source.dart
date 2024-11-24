@@ -74,7 +74,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trashtrack_user/converters/timestamp_converter.dart';
 import 'package:trashtrack_user/data/repositories/schedule_repository.dart';
-import 'package:trashtrack_user/extensions/datetime_formatter.dart';
 import 'package:trashtrack_user/models/fleet/fleet.dart';
 import 'package:trashtrack_user/models/route/route.dart';
 import 'package:trashtrack_user/models/schedule/schedule.dart';

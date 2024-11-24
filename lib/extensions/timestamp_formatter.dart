@@ -17,4 +17,11 @@ extension TimestampFormatter on Timestamp {
 
     return formatter.format(dateTime);
   }
+
+  String toFormattedDay() {
+    // Assuming 'day' is in the format of a DateTime string or a DateTime object
+    DateFormat formatter =
+        DateFormat('EEEE'); // 'EEEE' for full day name, 'EEE' for abbreviated
+    return formatter.format(toDate());
+  }
 }

@@ -17,11 +17,10 @@ import 'package:trashtrack_user/pages/protected/analysis/analysis_page.dart';
 import 'package:trashtrack_user/pages/protected/forum/posts_page.dart';
 import 'package:trashtrack_user/pages/protected/profile/edit_profile_page.dart';
 import 'package:trashtrack_user/pages/protected/recycling/recycling_sorting_page.dart';
-import 'package:trashtrack_user/pages/protected/schedule/schedules_page.dart';
+
 import 'package:trashtrack_user/pages/protected/schedule/Week_of_Days.dart';
 import 'package:trashtrack_user/pages/protected/settings/settings_page.dart';
-import 'package:trashtrack_user/pages/terms_page.dart';
-import 'package:trashtrack_user/widgets/custom_app_bar.dart';
+
 import 'package:trashtrack_user/widgets/custom_cached_image.dart';
 import 'package:trashtrack_user/widgets/custom_elevated_button.dart';
 import 'package:trashtrack_user/models/route/route.dart' as rm;
@@ -67,11 +66,12 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF02413C),
-        title: const Text('TrashTrack'),
-        centerTitle: true,
-        titleTextStyle: const TextStyle(
-          color: Colors.white,
+        title: Image.asset(
+          'lib/assets/images/logo-trashtrack.png', // Path to your logo image
+          fit: BoxFit.contain, // Adjust to fit the AppBar
+          height: 40, // Adjust the height to fit the AppBar nicely
         ),
+        centerTitle: true,
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
@@ -93,6 +93,7 @@ class HomePage extends StatelessWidget {
           },
         ),
       ),
+
       drawer: buildAppDrawer(context), // Call to the drawer
       body: buildGetRoutesBC(), // Placeholder for your main content
     );

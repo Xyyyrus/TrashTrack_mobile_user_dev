@@ -11,7 +11,8 @@ class Schedule with _$Schedule {
     required String id,
     required String routeId,
     required String fleetId,
-    required String driverId,
+    String?
+        driverId, // Made this field optional by using String? instead of required String
     required String day,
     @TimestampConverter() required Timestamp time,
     String? routeName,

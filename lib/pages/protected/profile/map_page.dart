@@ -275,7 +275,7 @@ class _MapPageState extends State<MapPage> {
         position: _currentLocation!,
         // icon: _userIcon, removed due to not following the user's actual loc
         infoWindow: const InfoWindow(
-          title: 'Your Current Location',
+          title: 'Your Location',
         ),
       ));
     }
@@ -287,23 +287,109 @@ class _MapPageState extends State<MapPage> {
             markerId: MarkerId('${route.routeName}_start'),
             position: route.pathPoints.first,
             icon: _goIcon,
-            infoWindow: InfoWindow(
-              title: 'Start Point',
-              snippet:
-                  'Distance: ${route.distance}, Duration: ${route.duration}',
-            ),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  backgroundColor: Colors.blueAccent,
+                  content: Column(
+                    mainAxisSize:
+                        MainAxisSize.min, // Use min size to fit content
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start, // Align items to the start
+                    children: [
+                      const Text(
+                        'Start Point of collection', // Replace with your actual start point variable
+                        style: TextStyle(
+                          fontSize: 18, // Font size for the title
+                          color: Colors.white, // Title color
+                          fontWeight: FontWeight.bold, // Make title bold
+                        ),
+                      ),
+                      const SizedBox(
+                          height:
+                              4), // Add some space between title and content
+                      Text(
+                        '🚙 Distance: ${route.distance} km\n'
+                        '⌚ Duration: ${route.duration} min',
+                        style: const TextStyle(
+                          fontSize: 16, // Adjust font size
+                          color: Colors.white, // Change text color
+                          fontWeight: FontWeight.normal, // Make text normal
+                        ),
+                        textAlign: TextAlign.left, // Align text to the left
+                      ),
+                    ],
+                  ),
+                  duration: const Duration(seconds: 3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8), // Rounded corners
+                  ),
+                  behavior: SnackBarBehavior.floating, // Make it float
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 20), // Adjust margin
+                ),
+              );
+            },
           ));
-
           markers.add(Marker(
             markerId: MarkerId('${route.routeName}_end'),
             position: route.pathPoints.last,
             icon: _stopIcon,
-            infoWindow: InfoWindow(
-              title: 'End Point',
-              snippet:
-                  'Distance: ${route.distance}, Duration: ${route.duration}',
-            ),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  backgroundColor: Colors.blueAccent,
+                  content: Column(
+                    mainAxisSize:
+                        MainAxisSize.min, // Use min size to fit content
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start, // Align items to the start
+                    children: [
+                      const Text(
+                        'End Point of collection', // Replace with your actual start point variable
+                        style: TextStyle(
+                          fontSize: 18, // Font size for the title
+                          color: Colors.white, // Title color
+                          fontWeight: FontWeight.bold, // Make title bold
+                        ),
+                      ),
+                      const SizedBox(
+                          height:
+                              4), // Add some space between title and content
+                      Text(
+                        '🚙 Distance: ${route.distance} km\n'
+                        '⌚ Duration: ${route.duration} min',
+                        style: const TextStyle(
+                          fontSize: 16, // Adjust font size
+                          color: Colors.white, // Change text color
+                          fontWeight: FontWeight.normal, // Make text normal
+                        ),
+                        textAlign: TextAlign.left, // Align text to the left
+                      ),
+                    ],
+                  ),
+                  duration: const Duration(seconds: 3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8), // Rounded corners
+                  ),
+                  behavior: SnackBarBehavior.floating, // Make it float
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 20), // Adjust margin
+                ),
+              );
+            },
           ));
+          // markers.add(Marker(
+          //   markerId: MarkerId('${route.routeName}_end'),
+          //   position: route.pathPoints.last,
+          //   icon: _stopIcon,
+          //   infoWindow: InfoWindow(
+          //     title: 'End Point',
+          //     snippet:
+          //         '📍 Distance: ${route.distance} km\n⏱ Duration: ${route.duration} min',
+          //     // This will create a more formatted display.
+          //   ),
+          // ));
         }
       }
     }

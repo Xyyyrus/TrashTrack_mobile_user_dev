@@ -12,12 +12,23 @@ class SchedulesPage extends StatelessWidget {
   const SchedulesPage({super.key});
 
   void _gotoRoutePage(BuildContext context, Schedule schedule) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => RoutePage(schedule: schedule),
-      ),
-    );
+    // Check if the schedule is valid before navigating
+    if (schedule != null) {
+      try {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) => RoutePage(schedule: schedule),
+          ),
+        ).then((value) {
+          // Handle any return values from RoutePage if needed
+        });
+      } catch (error) {
+        _showErrorDialog(context, 'Error navigating to the route page: $error');
+      }
+    } else {
+      _showErrorDialog(context, 'Invalid schedule data.');
+    }
   }
 
   @override
@@ -81,6 +92,26 @@ class SchedulesPage extends StatelessWidget {
             child: CircularProgressIndicator(),
           );
         }
+      },
+    );
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
       },
     );
   }
