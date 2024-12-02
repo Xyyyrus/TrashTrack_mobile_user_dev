@@ -51,12 +51,14 @@ import 'package:trashtrack_user/data/sources/profile/update_profile_source.dart'
 import 'package:trashtrack_user/data/sources/route/get_route_source.dart';
 import 'package:trashtrack_user/data/sources/route/get_routes_source.dart';
 import 'package:trashtrack_user/data/sources/schedule/get_schedules_source.dart';
+import 'package:trashtrack_user/pages/login_page.dart';
 
 dynamic _repositoryProviders() {
   return [
     RepositoryProvider(
       create: (BuildContext context) => AuthRepository(
         loginSource: LoginSource(),
+        loginSourceGoogle: LoginSourceGoogle(),
         logoutSource: LogoutSource(),
         forgotSource: ForgotSource(),
         registerSource: RegisterSource(),
@@ -66,6 +68,18 @@ dynamic _repositoryProviders() {
       create: (BuildContext context) => RegisterBloc(
         context.read<AuthRepository>(),
       ),
+    ),
+    BlocProvider(
+      create: (context) => LoginBloc(
+        AuthRepository(
+          loginSource: LoginSource(),
+          loginSourceGoogle: LoginSourceGoogle(),
+          logoutSource: LogoutSource(),
+          registerSource: RegisterSource(),
+          forgotSource: ForgotSource(),
+        ),
+      ),
+      child: const LoginPage(),
     ),
     RepositoryProvider(
       create: (BuildContext context) => AnnouncementRepository(
