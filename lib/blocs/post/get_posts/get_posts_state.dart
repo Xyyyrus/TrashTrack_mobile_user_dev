@@ -9,8 +9,9 @@ class GetPostsProcessingState extends GetPostsState {}
 
 class GetPostsSuccessfulState extends GetPostsState {
   final List<Post> posts;
+  final bool hasMorePosts; // Include hasMorePosts flag
 
-  GetPostsSuccessfulState(this.posts);
+  GetPostsSuccessfulState(this.posts, {this.hasMorePosts = false});
 }
 
 class GetPostsErrorState extends GetPostsState {

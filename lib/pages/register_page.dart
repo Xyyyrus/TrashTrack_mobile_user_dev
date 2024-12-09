@@ -35,13 +35,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isChecked = false;
 
   void _getRoutesList() {
-<<<<<<< HEAD
     BlocProvider.of<GetRoutesBloc>(context).add(GetRoutesEvent());
-=======
-    BlocProvider.of<GetRoutesBloc>(context).add(
-      GetRoutesEvent(),
-    );
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
   }
 
   void _changeSelectedBarangay(String? value) {
@@ -53,17 +47,8 @@ class _RegisterPageState extends State<RegisterPage> {
   void _showHidePassword() {
     setState(() {
       _passwordHidden = !_passwordHidden;
-<<<<<<< HEAD
       _visibilityIcon =
           _passwordHidden ? Icons.visibility_off : Icons.visibility;
-=======
-
-      if (_passwordHidden) {
-        _visibilityIcon = Icons.visibility_off;
-      } else {
-        _visibilityIcon = Icons.visibility;
-      }
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
     });
   }
 
@@ -76,13 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
   void _gotoTermsPage() async {
     final bool? agreed = await Navigator.push(
       context,
-<<<<<<< HEAD
       MaterialPageRoute(builder: (BuildContext context) => const TermsPage()),
-=======
-      MaterialPageRoute(
-        builder: (BuildContext context) => const TermsPage(),
-      ),
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
     );
 
     if (agreed == true) {
@@ -95,7 +74,6 @@ class _RegisterPageState extends State<RegisterPage> {
   void _signupAuthAccount() {
     FormState? formState = _formKey.currentState;
 
-<<<<<<< HEAD
     if (formState != null && formState.validate()) {
       BlocProvider.of<RegisterBloc>(context).add(
         RegisterAccountEvent(
@@ -108,22 +86,6 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         ),
       );
-=======
-    if (formState != null) {
-      if (formState.validate()) {
-        BlocProvider.of<RegisterBloc>(context).add(
-          RegisterAccountEvent(
-            Credential(
-              firstname: _firstnameController.text.trim(),
-              lastname: _lastnameController.text.trim(),
-              barangay: _selectedBarangay,
-              email: _emailController.text.trim(),
-              password: _passwordController.text.trim(),
-            ),
-          ),
-        );
-      }
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
     }
   }
 
@@ -133,20 +95,12 @@ class _RegisterPageState extends State<RegisterPage> {
     _lastnameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-<<<<<<< HEAD
-=======
-
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
     super.dispose();
   }
 
   @override
   void initState() {
     _getRoutesList();
-<<<<<<< HEAD
-=======
-
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
     super.initState();
   }
 
@@ -194,11 +148,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   textController: _passwordController,
                   prefixIcon: Icons.lock,
                   labelText: 'Password',
-<<<<<<< HEAD
                   onPressed: _showHidePassword,
-=======
-                  onPressed: () => _showHidePassword(),
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
                   suffixIcon: _visibilityIcon,
                   obscureText: _passwordHidden,
                   validator: passwordValidator,
@@ -222,15 +172,8 @@ class _RegisterPageState extends State<RegisterPage> {
           value: _isChecked,
           onChanged: (bool? newValue) async {
             if (newValue == true) {
-<<<<<<< HEAD
               _gotoTermsPage();
             } else {
-=======
-              // If trying to check, go to the terms page and let them agree
-              _gotoTermsPage();
-            } else {
-              // Allow unchecking the box directly
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
               setState(() {
                 _isChecked = false;
               });
@@ -269,11 +212,7 @@ class _RegisterPageState extends State<RegisterPage> {
           return CustomDropdownButton(
             value: _selectedBarangay,
             options: _routeList,
-<<<<<<< HEAD
             onChanged: _changeSelectedBarangay,
-=======
-            onChanged: (value) => _changeSelectedBarangay(value),
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
           );
         } else if (state is GetRoutesErrorState) {
           return Text(
@@ -292,13 +231,7 @@ class _RegisterPageState extends State<RegisterPage> {
       listener: (context, state) {
         if (state is RegisterSuccessfulState) {
           Navigator.pop(context);
-<<<<<<< HEAD
         } else if (state is RegisterErrorState) {
-=======
-        }
-
-        if (state is RegisterErrorState) {
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
           MessageDialogHelper.showErrorDialog(
             context,
             'Register Error',

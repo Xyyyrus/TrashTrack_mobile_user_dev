@@ -1,54 +1,24 @@
-// import 'package:dartz/dartz.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:google_sign_in/google_sign_in.dart';
-// import 'package:trashtrack_user/data/repositories/auth_repository.dart';
-
-// class LoginSource {
-//   FESST login() async {
-//     final firebaseAuth = FirebaseAuth.instance;
-//     final googleSignin = GoogleSignIn();
-
-//     try {
-//       final googleUser = await googleSignin.signIn();
-//       final googleAuth = await googleUser?.authentication;
-
-//       final authCredential = GoogleAuthProvider.credential(
-//         accessToken: googleAuth?.accessToken,
-//         idToken: googleAuth?.idToken,
-//       );
-
-//       await firebaseAuth.signInWithCredential(authCredential);
-
-//       return const Right('Login successful');
-//     } catch (e) {
-//       String error = 'Error signing in: $e';
-
-//       return Left(error);
-//     }
-//   }
-// }
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:trashtrack_user/data/repositories/auth_repository.dart';
 import 'package:trashtrack_user/models/credential/credential.dart';
 
-<<<<<<< HEAD
 class LoginSourceGoogle {
   FESST loginGoogle() async {
     final firebaseAuth = FirebaseAuth.instance;
     final googleSignin = GoogleSignIn();
 
-=======
-class LoginSource {
-  FESST login(Credential credential) async {
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
     try {
-      final firebaseAuth = FirebaseAuth.instance;
+      final googleUser = await googleSignin.signIn();
+      final googleAuth = await googleUser?.authentication;
 
-      await firebaseAuth.signInWithEmailAndPassword(
-        email: credential.email,
-        password: credential.password ?? '',
+      final authCredential = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken,
+        idToken: googleAuth?.idToken,
       );
+
+      await firebaseAuth.signInWithCredential(authCredential);
 
       return const Right('Login successful');
     } catch (e) {

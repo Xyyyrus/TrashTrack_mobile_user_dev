@@ -6,54 +6,70 @@ import 'package:trashtrack_user/models/post/post.dart';
 import 'package:trashtrack_user/models/profile/profile.dart';
 
 class GetPostsSource {
-  FESLT getPosts() async {
+  Future<Either<String, List<Post>>> getPosts({
+    String? lastPostId,
+    int limit = 10,
+  }) async {
     try {
       final firebaseFire = FirebaseFirestore.instance;
       final postsCol = firebaseFire.collection('posts');
       final usersCol = firebaseFire.collection('users');
       final commentsCol = firebaseFire.collection('comments');
 
-      final orderBy = postsCol.orderBy('createdAt', descending: true);
-      final postsSnapshot = await orderBy.get();
+      Query query =
+          postsCol.orderBy('createdAt', descending: true).limit(limit);
 
+      if (lastPostId != null) {
+        final lastPostSnapshot = await postsCol.doc(lastPostId).get();
+        if (!lastPostSnapshot.exists) {
+          return Left("Invalid lastPostId");
+        }
+        query = query.startAfterDocument(lastPostSnapshot);
+      }
+
+      final postsSnapshot = await query.get();
       final List<Post> postsObjects = [];
 
       for (var postDoc in postsSnapshot.docs) {
-        final postMap = postDoc.data();
+        final postMap = postDoc.data() as Map<String, dynamic>?;
+        if (postMap == null) continue;
+
+        final createdAt = postMap['createdAt'];
+        if (createdAt == null) continue;
+
         var postObject = Post.fromJson({
           ...postMap,
           'id': postDoc.id,
-          'createdAt': const TimestampConverter().toJson(postMap['createdAt']),
+          'createdAt': const TimestampConverter().toJson(createdAt),
         });
 
+        // Fetch author details
         final userRef = usersCol.doc(postObject.uid);
         final userSnapshot = await userRef.get();
-        final userMap = userSnapshot.data() as Map<String, dynamic>;
-        final userObj = Profile.fromJson({
-          ...userMap,
-          'id': userSnapshot.id,
-        });
+        if (userSnapshot.exists) {
+          final userMap = userSnapshot.data() as Map<String, dynamic>;
+          final userObj = Profile.fromJson({
+            ...userMap,
+            'id': userSnapshot.id,
+          });
+          postObject = postObject.copyWith(
+            author: '${userObj.firstname} ${userObj.lastname}',
+          );
+        }
 
-        final commentsCond = commentsCol.where(
-          'postId',
-          isEqualTo: postObject.id,
-        );
+        // Fetch comments count
+        final commentsCond =
+            commentsCol.where('postId', isEqualTo: postObject.id);
         final commentsSnapshot = await commentsCond.get();
         final commentsCount = commentsSnapshot.size;
 
-        postObject = postObject.copyWith(
-          author: '${userObj.firstname} ${userObj.lastname}',
-          commentsCount: commentsCount,
-        );
-
+        postObject = postObject.copyWith(commentsCount: commentsCount);
         postsObjects.add(postObject);
       }
 
       return Right(postsObjects);
     } catch (e) {
-      String error = 'Error getting posts: $e';
-
-      return Left(error);
+      return Left("Error fetching posts: ${e.toString()}");
     }
   }
 }

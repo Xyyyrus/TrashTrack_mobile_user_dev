@@ -1,18 +1,15 @@
+import 'dart:async';
 import 'dart:math';
-
 import 'package:dartz/dartz.dart' as dartz;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:trashtrack_user/data/repositories/fleet_repository.dart';
-import 'package:trashtrack_user/helpers/notification_message_helper.dart';
 import 'package:trashtrack_user/models/fleet/fleet.dart';
 import 'package:trashtrack_user/models/schedule/schedule.dart';
 import 'package:trashtrack_user/widgets/custom_app_bar.dart';
-
-typedef GFSBT = StreamBuilder<dartz.Either<String, Fleet>>;
-typedef ESFST = dartz.Either<String, Fleet>;
 
 class RoutePage extends StatefulWidget {
   const RoutePage({super.key, required this.schedule});
@@ -23,70 +20,32 @@ class RoutePage extends StatefulWidget {
 }
 
 class _RoutePageState extends State<RoutePage> {
-  int _uniqueId = 0;
+  late Location _locationService;
+  late StreamSubscription _fleetSubscription;
+  late StreamSubscription? _userLocationSubscription;
   final List<LatLng> _allCoordinates = [];
   final List<LatLng> _allCollections = [];
+  LatLng? _driverLocation;
+  LatLng? _userLocation;
   BitmapDescriptor _truckIcon = BitmapDescriptor.defaultMarker;
   BitmapDescriptor _goIcon = BitmapDescriptor.defaultMarker;
-  BitmapDescriptor _userIcon = BitmapDescriptor.defaultMarker;
   BitmapDescriptor _stopIcon = BitmapDescriptor.defaultMarker;
+  BitmapDescriptor _userIcon = BitmapDescriptor.defaultMarker;
   BitmapDescriptor _binIcon = BitmapDescriptor.defaultMarker;
-  LocationData _currentLocation = LocationData.fromMap({
-    'latitude': 0.0,
-    'longitude': 0.0,
-  });
+  bool _isDriverWithinGeofence = false;
+  GoogleMapController? mapController;
 
-  void _generateId() {
-    const min = 0;
-    const max = 1000000;
-    final random = Random.secure();
-    final id = min + random.nextInt(max - min);
-
-    setState(() {
-      _uniqueId = id;
-    });
-  }
-
-  Future<void> _getLocation() async {
-    final Location locationService = Location();
-
-    bool serviceEnabled = await locationService.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await locationService.requestService();
-
-      if (!serviceEnabled) {
-        return;
-      }
-    }
-
-    PermissionStatus permissionGranted = await locationService.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await locationService.requestPermission();
-
-      if (permissionGranted != PermissionStatus.granted) {
-        return;
-      }
-    }
-
-    _currentLocation = await locationService.getLocation();
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
+  // Set the route coordinates from the schedule
   void _setCoordinates() {
     for (var l in widget.schedule.routePath ?? []) {
-      LatLng latLng = LatLng(l['lat'], l['lng']);
-
-      _allCoordinates.add(latLng);
+      _allCoordinates.add(LatLng(l['lat'], l['lng']));
     }
   }
 
+  // Set collection points
   void _setCollections() {
     for (var l in widget.schedule.collectionsPath ?? []) {
-      LatLng latLng = LatLng(l['lat'] ?? 0, l['lng'] ?? 0);
-
-      _allCollections.add(latLng);
+      _allCollections.add(LatLng(l['lat'] ?? 0, l['lng'] ?? 0));
     }
   }
 
@@ -97,6 +56,13 @@ class _RoutePageState extends State<RoutePage> {
     );
   }
 
+  Future<void> _loadUserIcon() async {
+    _userIcon = await BitmapDescriptor.asset(
+      const ImageConfiguration(size: Size(40, 40)), // Reduced size
+      'lib/assets/images/user.png', // Path to user icon
+    );
+  }
+
   Future<void> _loadgoIcon() async {
     _goIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(40, 40)),
@@ -104,46 +70,10 @@ class _RoutePageState extends State<RoutePage> {
     );
   }
 
-  Future<void> _startLocationUpdates() async {
-    final Location locationService = Location();
-
-    bool serviceEnabled = await locationService.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await locationService.requestService();
-
-      if (!serviceEnabled) {
-        return;
-      }
-    }
-
-    PermissionStatus permissionGranted = await locationService.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await locationService.requestPermission();
-
-      if (permissionGranted != PermissionStatus.granted) {
-        return;
-      }
-    }
-
-    // Start listening to location updates
-    locationService.onLocationChanged.listen((LocationData locationData) {
-      setState(() {
-        _currentLocation = locationData; // Update current location
-      });
-    });
-  }
-
   Future<void> _loadstopIcon() async {
     _stopIcon = await BitmapDescriptor.asset(
       const ImageConfiguration(size: Size(40, 40)),
       'lib/assets/images/red-stop.png',
-    );
-  }
-
-  Future<void> _loadUserIcon() async {
-    _userIcon = await BitmapDescriptor.asset(
-      const ImageConfiguration(size: Size(40, 40)), // Reduced size
-      'lib/assets/images/user.png', // Path to user icon
     );
   }
 
@@ -154,36 +84,103 @@ class _RoutePageState extends State<RoutePage> {
     );
   }
 
-  Future<void> _checkLocation(
-    FleetRepository fleetRepository,
-    LatLng driverLoc,
-  ) async {
-    final userLoc = LatLng(
-      _currentLocation.latitude ?? 0,
-      _currentLocation.longitude ?? 0,
-    );
+  // Load custom icons for the map markers
+  // Future<void> _loadIcons() async {
+  //   _goIcon = await BitmapDescriptor.fromAssetImage(
+  //     const ImageConfiguration(size: Size(40, 40)),
+  //     'lib/assets/images/green-go.png',
+  //   );
+  //   _stopIcon = await BitmapDescriptor.fromAssetImage(
+  //     const ImageConfiguration(size: Size(40, 40)),
+  //     'lib/assets/images/red-stop.png',
+  //   );
+  //   _binIcon = await BitmapDescriptor.fromAssetImage(
+  //     const ImageConfiguration(size: Size(40, 40)),
+  //     'lib/assets/images/trash-bin.png',
+  //   );
+  // }
 
-    final result = await fleetRepository.getDistance(userLoc, driverLoc);
+  // Geofence checking logic
+  bool _isWithinGeofence(LatLng driverLoc, double radiusMeters) {
+    return _allCoordinates.any((point) {
+      final distance = Geolocator.distanceBetween(
+        driverLoc.latitude,
+        driverLoc.longitude,
+        point.latitude,
+        point.longitude,
+      );
+      return distance < radiusMeters;
+    });
+  }
 
-    result.fold((String l) {
-      debugPrint(l);
-    }, (int r) {
-      if (r < 500) {
-        NotificationMessageHelper.showMessageNotification(
-          _uniqueId.toString(),
-          'Location Notification',
-          'The truck driver is near!',
-        );
+  // Listen to fleet updates
+  void _listenToFleetUpdates(FleetRepository fleetRepository) {
+    _fleetSubscription = fleetRepository
+        .getFleet(widget.schedule.fleetId)
+        .listen((result) async {
+      result.fold(
+        (error) {
+          debugPrint('Error fetching fleet data: $error');
+          setState(() {
+            _driverLocation = null;
+            _isDriverWithinGeofence = false;
+          });
+        },
+        (fleet) async {
+          try {
+            // Check driver status from Firestore
+            final isActive = await fleetRepository.isDriverActive(fleet.id);
+
+            if (!isActive) {
+              // Driver is inactive; show "Off Duty" but still render the map
+              setState(() {
+                _driverLocation = null;
+                _isDriverWithinGeofence = false;
+              });
+              return;
+            }
+
+            // Update driver location if active
+            final location = fleet.location;
+            final driverLat = location['latitude'];
+            final driverLng = location['longitude'];
+
+            if (driverLat != null && driverLng != null) {
+              final driverLoc = LatLng(driverLat, driverLng);
+              setState(() {
+                _driverLocation = driverLoc;
+                _isDriverWithinGeofence = _isWithinGeofence(driverLoc, 50.0);
+              });
+            }
+          } catch (e) {
+            debugPrint('Error during fleet update: $e');
+            setState(() {
+              _driverLocation = null;
+              _isDriverWithinGeofence = false;
+            });
+          }
+        },
+      );
+    });
+  }
+
+  void _startUserLocationTracking() {
+    _userLocationSubscription =
+        _locationService.onLocationChanged.listen((locationData) {
+      if (locationData.latitude != null && locationData.longitude != null) {
+        setState(() {
+          _userLocation =
+              LatLng(locationData.latitude!, locationData.longitude!);
+        });
       }
+    }, onError: (error) {
+      debugPrint('Error tracking user location: $error');
     });
   }
 
   @override
   void initState() {
     super.initState();
-    _startLocationUpdates();
-    _generateId();
-    _getLocation();
     _setCoordinates();
     _setCollections();
     _loadTruckIcon();
@@ -192,14 +189,22 @@ class _RoutePageState extends State<RoutePage> {
     _loadUserIcon();
     _loadbinIcon();
 
-    // Check for valid schedule data
     if (widget.schedule.routePath == null ||
         widget.schedule.collectionsPath == null) {
-      // Show an error dialog if route or collection paths are null
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showErrorDialog(context, 'Invalid schedule data received.');
       });
     }
+
+    _locationService = Location();
+    _locationService.requestPermission().then((permissionStatus) {
+      if (permissionStatus != PermissionStatus.granted) {
+        _showErrorDialog(context, 'Location permission denied.');
+      }
+    });
+
+    final fleetRepository = context.read<FleetRepository>();
+    _listenToFleetUpdates(fleetRepository);
   }
 
   void _showErrorDialog(BuildContext context, String message) {
@@ -211,9 +216,7 @@ class _RoutePageState extends State<RoutePage> {
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('OK'),
             ),
           ],
@@ -223,172 +226,157 @@ class _RoutePageState extends State<RoutePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final fleetRepository = context.read<FleetRepository>();
+  void dispose() {
+    _fleetSubscription.cancel();
+    _userLocationSubscription?.cancel();
+    super.dispose();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(
-        title: 'Active Collector',
+      appBar: CustomAppBar(
+        title: 'Collection Map',
         showLegendIcon: true,
       ),
-      body: Center(
-        child: buildGetFleetSB(fleetRepository),
+      body: Stack(
+        children: [
+          buildGoogleMap(), // Always load the map
+          Positioned(
+            top: 16,
+            right: 16,
+            child: _buildStatusFab(),
+          ),
+        ],
       ),
     );
   }
 
-  GFSBT buildGetFleetSB(FleetRepository fleetRepository) {
-    return GFSBT(
-      stream: fleetRepository.getFleet(widget.schedule.fleetId),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          final result = snapshot.data;
+  Widget _buildMapScreen() {
+    return Scaffold(
+      appBar: CustomAppBar(
+        title: 'Collection Map',
+        showLegendIcon: true,
+      ),
+      body: Stack(
+        children: [
+          buildGoogleMap(),
+          Positioned(
+            top: 16,
+            right: 16,
+            child: _buildStatusFab(),
+          ),
+        ],
+      ),
+    );
+  }
 
-          Widget widget = Container();
+  Widget _buildStatusFab() {
+    String statusMessage;
+    Color fabColor;
 
-          if (result != null) {
-            result.fold((String l) {
-              widget = const Text('Error getting the fleet');
-            }, (Fleet r) {
-              final location = r.location;
+    if (_driverLocation != null) {
+      final driverStatus = _isDriverWithinGeofence ? "On Route" : "Off Route";
+      statusMessage = "Active Driver - $driverStatus";
+      fabColor = _isDriverWithinGeofence ? Colors.green : Colors.orange;
+    } else {
+      statusMessage = "Off Duty";
+      fabColor = Colors.red;
+    }
 
-              // Validate driver location before using it
-              final double? driverLat = location['latitude'];
-              final double? driverLng = location['longitude'];
+    return FloatingActionButton.extended(
+      onPressed: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Status: $statusMessage"),
+          ),
+        );
+      },
+      label: Text(
+        statusMessage,
+        style: const TextStyle(color: Colors.white),
+      ),
+      icon: const Icon(
+        Icons.info_outline,
+        color: Colors.white,
+      ),
+      backgroundColor: fabColor,
+    );
+  }
 
-              if (driverLat == null || driverLng == null) {
-                // Handle the case where driver location is invalid
-                widget = Container(
-                  padding: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.2),
-                    border: Border.all(color: Colors.red),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.warning,
-                        color: Colors.red,
-                        size: 48.0,
-                      ),
-                      SizedBox(height: 16.0),
-                      Text(
-                        'Driver Location Unavailable',
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8.0),
-                      Text(
-                        'The driver location is currently unavailable. Please check back later.',
-                        style: TextStyle(
-                          fontSize: 14.0,
-                          color: Colors.black54,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                final driverLoc = LatLng(driverLat, driverLng);
+  Widget buildGoogleMap() {
+    final Set<Marker> markers = {
+      Marker(
+        markerId: const MarkerId('start_marker'),
+        position: _allCoordinates.first,
+        icon: _goIcon,
+        infoWindow: const InfoWindow(
+          title: 'Start Point',
+          snippet: 'This is the start of the route',
+        ),
+      ),
+      Marker(
+        markerId: const MarkerId('end_marker'),
+        position: _allCoordinates.last,
+        icon: _stopIcon,
+      ),
+    };
 
-                final userLat = _currentLocation.latitude;
-                final userLng = _currentLocation.longitude;
+    // Add collection points
+    for (int i = 0; i < _allCollections.length; i++) {
+      markers.add(
+        Marker(
+          markerId: MarkerId('collection_marker_$i'),
+          position: _allCollections[i],
+          icon: _binIcon,
+          infoWindow: InfoWindow(
+            title: 'Collection Point',
+            snippet: 'Collection point ${i + 1}',
+          ),
+        ),
+      );
+    }
 
-                if (userLat != 0 && userLng != 0) {
-                  _checkLocation(fleetRepository, driverLoc);
-                }
+    // Only show the driver's marker if the driver is within the geofence or location is available
+    if (_driverLocation != null && _isDriverWithinGeofence) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('driver_marker'),
+          position: _driverLocation!,
+          icon: _truckIcon,
+        ),
+      );
+    }
+    if (_userLocation != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('user_marker'),
+          position: _userLocation!,
+          icon: _userIcon,
+          infoWindow: const InfoWindow(
+            title: 'Your Location',
+            snippet: 'Your current location',
+          ),
+        ),
+      );
+    }
 
-                final Set<Marker> markers = {
-                  Marker(
-                    markerId: const MarkerId('user_marker'),
-                    icon: _userIcon,
-                    position: LatLng(
-                      _currentLocation.latitude ?? 0,
-                      _currentLocation.longitude ?? 0,
-                    ),
-                    infoWindow: const InfoWindow(
-                      title: 'User Point',
-                      snippet: 'This is the user in the map',
-                    ),
-                  ),
-                  Marker(
-                    markerId: const MarkerId('driver_marker'),
-                    position: driverLoc,
-                    icon: _truckIcon,
-                    infoWindow: const InfoWindow(
-                      title: 'Driver Point',
-                      snippet: 'This is the driver in the route',
-                    ),
-                  ),
-                  Marker(
-                    markerId: const MarkerId('start_marker'),
-                    position: _allCoordinates.first,
-                    icon: _goIcon,
-                    infoWindow: const InfoWindow(
-                      title: 'Start Point',
-                      snippet: 'This is the start of the route',
-                    ),
-                  ),
-                  Marker(
-                    markerId: const MarkerId('end_marker'),
-                    position: _allCoordinates.last,
-                    icon: _stopIcon,
-                    infoWindow: const InfoWindow(
-                      title: 'End Point',
-                      snippet: 'This is the end of the route',
-                    ),
-                  ),
-                };
-
-                for (int i = 0; i < _allCollections.length; i++) {
-                  final collectionLoc = _allCollections[i];
-                  final collectionLatLng = LatLng(
-                    collectionLoc.latitude,
-                    collectionLoc.longitude,
-                  );
-                  markers.add(
-                    Marker(
-                      markerId: MarkerId('collection_marker_$i'),
-                      icon: _binIcon,
-                      position: collectionLatLng,
-                      infoWindow: InfoWindow(
-                        title: 'Collection Point',
-                        snippet: 'Collection point ${i + 1}',
-                      ),
-                    ),
-                  );
-                }
-
-                widget = GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: _allCoordinates.first,
-                    zoom: 15.0,
-                  ),
-                  polylines: {
-                    Polyline(
-                      polylineId: const PolylineId('route_path'),
-                      points: _allCoordinates,
-                      color: Colors.blue,
-                      width: 5,
-                    ),
-                  },
-                  markers: markers,
-                );
-              }
-            });
-          }
-
-          return widget;
-        } else {
-          return const CircularProgressIndicator();
-        }
+    return GoogleMap(
+      initialCameraPosition: CameraPosition(
+        target: _allCoordinates.first,
+        zoom: 15.0,
+      ),
+      polylines: {
+        Polyline(
+          polylineId: const PolylineId('route_path'),
+          points: _allCoordinates,
+          color: Colors.blue,
+          width: 5,
+        ),
+      },
+      markers: markers,
+      onMapCreated: (GoogleMapController controller) {
+        mapController = controller;
       },
     );
   }

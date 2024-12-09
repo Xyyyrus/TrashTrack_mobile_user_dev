@@ -67,15 +67,7 @@ dynamic _repositoryProviders() {
         logoutSource: LogoutSource(),
         forgotSource: ForgotSource(),
         registerSource: RegisterSource(),
-<<<<<<< HEAD
         checkEmailSource: CheckEmailSource(),
-=======
-      ),
-    ),
-    BlocProvider(
-      create: (BuildContext context) => RegisterBloc(
-        context.read<AuthRepository>(),
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
       ),
     ),
     BlocProvider(
@@ -123,6 +115,15 @@ dynamic _repositoryProviders() {
         getFleetSource: GetFleetSource(),
         getStatusSource: GetStatusSource(),
         getDistanceSource: GetDistanceSource(),
+      ),
+    ),
+    RepositoryProvider(
+      create: (BuildContext context) => PostRepository(
+        addPostSource: AddPostSource(),
+        getPostsSource: GetPostsSource(),
+        deletePostSource: DeletePostSource(),
+        editPostSource: EditPostSource(),
+        reportPostSource: ReportPostSource(),
       ),
     ),
     RepositoryProvider(

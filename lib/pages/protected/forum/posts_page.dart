@@ -13,13 +13,51 @@ import 'package:trashtrack_user/pages/protected/forum/report_post_page.dart';
 import 'package:trashtrack_user/widgets/custom_app_bar.dart';
 import 'package:trashtrack_user/widgets/custom_cached_image.dart';
 
-class PostsPage extends StatelessWidget {
+class PostsPage extends StatefulWidget {
   const PostsPage({super.key});
 
-  void _getPosts(BuildContext context) {
-    BlocProvider.of<GetPostsBloc>(context).add(
-      GetPostsEvent(),
-    );
+  @override
+  _PostsPageState createState() => _PostsPageState();
+}
+
+class _PostsPageState extends State<PostsPage> {
+  late ScrollController _scrollController;
+  bool _isLoading = false; // To prevent multiple requests at the same time
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+
+    // Listen to scroll changes
+    _scrollController.addListener(_scrollListener);
+
+    // Initially load posts
+    _getPosts();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.atEdge &&
+        _scrollController.position.pixels != 0) {
+      // Reached the bottom of the list
+      if (!_isLoading) {
+        setState(() {
+          _isLoading = true;
+        });
+        _getPosts();
+      }
+    }
+  }
+
+  void _getPosts() {
+    BlocProvider.of<GetPostsBloc>(context).add(GetPostsEvent());
   }
 
   Future<void> _deletePost(BuildContext context, Post post) async {
@@ -28,22 +66,74 @@ class PostsPage extends StatelessWidget {
       'Record Deletion',
       'Are you sure you want to delete this record?',
       () {
-        BlocProvider.of<DeletePostBloc>(context).add(
-          DeletePostEvent(post),
-        );
+        BlocProvider.of<DeletePostBloc>(context).add(DeletePostEvent(post));
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    _getPosts(context);
-
     return Scaffold(
       appBar: const CustomAppBar(title: 'Forum'),
       body: Padding(
         padding: const EdgeInsets.only(left: 16, top: 16, right: 16),
-        child: buildGetPostsBB(),
+        child: BlocBuilder<GetPostsBloc, GetPostsState>(
+          builder: (BuildContext context, GetPostsState state) {
+            if (state is GetPostsSuccessfulState) {
+              final allPosts = state.posts;
+
+              return NotificationListener<ScrollNotification>(
+                onNotification: (ScrollNotification scrollInfo) {
+                  // When the user reaches the bottom, load more posts
+                  if (scrollInfo.metrics.pixels ==
+                      scrollInfo.metrics.maxScrollExtent) {
+                    if (!_isLoading) {
+                      setState(() {
+                        _isLoading = true;
+                      });
+                      _getPosts();
+                    }
+                  }
+                  return false;
+                },
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: allPosts.length +
+                      (_isLoading
+                          ? 1
+                          : 0), // Add one item for the loading indicator
+                  itemBuilder: (BuildContext context, int index) {
+                    if (index == allPosts.length) {
+                      return const Center(
+                          child:
+                              CircularProgressIndicator()); // Loading indicator at the end
+                    }
+
+                    Post post = allPosts[index];
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                PostInformationPage(post: post),
+                          ),
+                        ),
+                        child: buildActualPostCard(context, post),
+                      ),
+                    );
+                  },
+                ),
+              );
+            } else if (state is GetPostsProcessingState) {
+              return const Center(child: CircularProgressIndicator());
+            } else {
+              return const Center(child: Text('No posts available.'));
+            }
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.push(
@@ -54,55 +144,6 @@ class PostsPage extends StatelessWidget {
         ),
         child: const Icon(Icons.add),
       ),
-    );
-  }
-
-  BlocBuilder<GetPostsBloc, GetPostsState> buildGetPostsBB() {
-    return BlocBuilder<GetPostsBloc, GetPostsState>(
-      builder: (BuildContext context, GetPostsState state) {
-        if (state is GetPostsSuccessfulState) {
-          final allPosts = state.posts;
-
-          if (allPosts.isNotEmpty) {
-            return buildAllPostsLB(allPosts);
-          } else {
-            return const Center(
-              child: Text(
-                'No post yet',
-                style: TextStyle(fontSize: 17),
-              ),
-            );
-          }
-        } else {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-      },
-    );
-  }
-
-  ListView buildAllPostsLB(List<Post> posts) {
-    return ListView.builder(
-      itemCount: posts.length,
-      itemBuilder: (BuildContext context, int index) {
-        Post post = posts[index];
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (BuildContext context) => PostInformationPage(
-                  post: post,
-                ),
-              ),
-            ),
-            child: buildActualPostCard(context, post),
-          ),
-        );
-      },
     );
   }
 
@@ -159,7 +200,7 @@ class PostsPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              post.author ?? 'User',
+              post.author ?? "",
               style: const TextStyle(fontSize: 15),
             ),
             Text(
@@ -205,7 +246,7 @@ class PostsPage extends StatelessWidget {
     return BlocConsumer<DeletePostBloc, DeletePostState>(
       listener: (BuildContext context, DeletePostState state) {
         if (state is DeletePostSuccessfulState) {
-          _getPosts(context);
+          _getPosts();
         }
       },
       builder: (BuildContext context, DeletePostState state) {

@@ -3,7 +3,6 @@ import 'package:dartz/dartz.dart';
 import 'package:meta/meta.dart';
 import 'package:trashtrack_user/models/credential/credential.dart';
 import 'package:trashtrack_user/data/repositories/auth_repository.dart';
-import 'package:trashtrack_user/models/credential/credential.dart';
 
 part 'login_event.dart';
 part 'login_state.dart';
@@ -16,11 +15,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<LoginAccountEvent>((event, emit) async {
       emit(LoginProcessingState());
 
-<<<<<<< HEAD
       final result = await repository.login(event.credential);
-=======
-      final ESST result = await repository.login(event.credential);
->>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
 
       result.fold((error) => emit(LoginErrorState(error)),
           (success) => emit(LoginSuccessfulState(success)));

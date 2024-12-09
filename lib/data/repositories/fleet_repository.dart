@@ -31,4 +31,12 @@ class FleetRepository {
   FESIT getDistance(LatLng userLoc, LatLng driverLoc) async {
     return await getDistanceSource.getDistance(userLoc, driverLoc);
   }
+
+  Future<bool> isDriverActive(String fleetId) async {
+    final fleet = await getStatus(fleetId);
+    return fleet.fold(
+      (failure) => false, // Handle error, assume driver is inactive
+      (fleet) => fleet.status.toLowerCase() == 'active',
+    );
+  }
 }
