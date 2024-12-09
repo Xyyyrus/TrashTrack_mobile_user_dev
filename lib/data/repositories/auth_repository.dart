@@ -11,12 +11,19 @@ typedef FESST = Future<Either<String, String>>;
 
 /// Repository handling all authentication-related operations
 class AuthRepository {
+<<<<<<< HEAD
   final LoginSource loginSource;
   final LogoutSource logoutSource;
   final LoginSourceGoogle loginSourceGoogle;
   final RegisterSource registerSource;
   final ForgotSource forgotSource;
   final CheckEmailSource checkEmailSource;
+=======
+  LoginSource loginSource;
+  LogoutSource logoutSource;
+  RegisterSource registerSource;
+  ForgotSource forgotSource;
+>>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
 
   AuthRepository({
     required this.loginSource,
@@ -27,6 +34,7 @@ class AuthRepository {
     required this.checkEmailSource,
   });
 
+<<<<<<< HEAD
   /// Performs email/password login
   /// Returns Either with error string on left or success string on right
   FESST login(Credential credential) async {
@@ -35,6 +43,10 @@ class AuthRepository {
     } catch (e) {
       return Left('An unexpected error occurred: ${e.toString()}');
     }
+=======
+  FESST login(Credential credential) async {
+    return await loginSource.login(credential);
+>>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
   }
 
   FESST checkIfEmailExists(String email) async {
@@ -65,6 +77,7 @@ class AuthRepository {
     }
   }
 
+<<<<<<< HEAD
   /// Registers a new user
   /// Returns Either with error string on left or success string on right
   FESST register(Credential credential) async {
@@ -77,6 +90,12 @@ class AuthRepository {
 
   /// Initiates password reset flow
   /// Returns Either with error string on left or success string on right
+=======
+  FESST register(Credential credential) async {
+    return await registerSource.register(credential);
+  }
+
+>>>>>>> 1e77c47997af77dab89e0427b2db0e4d0829c202
   FESST forgot(Credential credential) async {
     try {
       return await forgotSource.forgot(credential);
