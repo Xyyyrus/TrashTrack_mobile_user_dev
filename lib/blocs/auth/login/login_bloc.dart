@@ -1,29 +1,34 @@
 import 'package:bloc/bloc.dart';
 import 'package:dartz/dartz.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:trashtrack_user/data/repositories/auth_repository.dart';
+import 'package:meta/meta.dart';
 import 'package:trashtrack_user/models/credential/credential.dart';
+import 'package:trashtrack_user/data/repositories/auth_repository.dart';
 
 part 'login_event.dart';
 part 'login_state.dart';
-
-typedef ESST = Either<String, String>;
 
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
   final AuthRepository repository;
 
   LoginBloc(this.repository) : super(LoginInitialState()) {
+    // Email login handler
     on<LoginAccountEvent>((event, emit) async {
       emit(LoginProcessingState());
 
-      final ESST result = await repository.login(event.credential);
+      final result = await repository.login(event.credential);
 
-      result.fold((String l) {
-        emit(LoginErrorState(l));
-      }, (String r) {
-        emit(LoginSuccessfulState(r));
-      });
+      result.fold((error) => emit(LoginErrorState(error)),
+          (success) => emit(LoginSuccessfulState(success)));
+    });
+
+    // Google login handler - this was missing before
+    on<LoginGoogleEvent>((event, emit) async {
+      emit(LoginProcessingState());
+
+      final result = await repository.loginGoogle();
+
+      result.fold((error) => emit(LoginErrorState(error)),
+          (success) => emit(LoginSuccessfulState(success)));
     });
   }
 }

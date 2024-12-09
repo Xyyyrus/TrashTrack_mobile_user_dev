@@ -13,6 +13,13 @@ class RegisterSuccessfulState extends RegisterState {
   RegisterSuccessfulState(this.message);
 }
 
+class EmailCheckState extends RegisterState {
+  final bool isUnique;
+  final String? errorMessage;
+
+  EmailCheckState({required this.isUnique, this.errorMessage});
+}
+
 class RegisterErrorState extends RegisterState {
   final String message;
 

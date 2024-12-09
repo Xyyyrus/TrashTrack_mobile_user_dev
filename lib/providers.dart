@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trashtrack_user/blocs/analysis/get_analysis/get_analysis_bloc.dart';
 import 'package:trashtrack_user/blocs/announcement/get_announcements/get_announcements_bloc.dart';
+import 'package:trashtrack_user/blocs/auth/check/check_email_bloc.dart';
 import 'package:trashtrack_user/blocs/auth/forgot/forgot_bloc.dart';
 import 'package:trashtrack_user/blocs/auth/login/login_bloc.dart';
 import 'package:trashtrack_user/blocs/auth/logout/logout_bloc.dart';
@@ -30,6 +32,7 @@ import 'package:trashtrack_user/data/repositories/route_repository.dart';
 import 'package:trashtrack_user/data/repositories/schedule_repository.dart';
 import 'package:trashtrack_user/data/sources/analysis/get_analysis_source.dart';
 import 'package:trashtrack_user/data/sources/announcement/get_announcements_source.dart';
+import 'package:trashtrack_user/data/sources/auth/check_email_source.dart';
 import 'package:trashtrack_user/data/sources/auth/forgot_source.dart';
 import 'package:trashtrack_user/data/sources/auth/login_source.dart';
 import 'package:trashtrack_user/data/sources/auth/logout_source.dart';
@@ -52,6 +55,8 @@ import 'package:trashtrack_user/data/sources/route/get_route_source.dart';
 import 'package:trashtrack_user/data/sources/route/get_routes_source.dart';
 import 'package:trashtrack_user/data/sources/schedule/get_schedules_source.dart';
 import 'package:trashtrack_user/pages/login_page.dart';
+import 'package:provider/provider.dart';
+import 'package:trashtrack_user/pages/register_page.dart';
 
 dynamic _repositoryProviders() {
   return [
@@ -62,6 +67,7 @@ dynamic _repositoryProviders() {
         logoutSource: LogoutSource(),
         forgotSource: ForgotSource(),
         registerSource: RegisterSource(),
+        checkEmailSource: CheckEmailSource(),
       ),
     ),
     BlocProvider(
@@ -77,6 +83,7 @@ dynamic _repositoryProviders() {
           logoutSource: LogoutSource(),
           registerSource: RegisterSource(),
           forgotSource: ForgotSource(),
+          checkEmailSource: CheckEmailSource(),
         ),
       ),
       child: const LoginPage(),
@@ -111,15 +118,6 @@ dynamic _repositoryProviders() {
       ),
     ),
     RepositoryProvider(
-      create: (BuildContext context) => PostRepository(
-        addPostSource: AddPostSource(),
-        getPostsSource: GetPostsSource(),
-        deletePostSource: DeletePostSource(),
-        editPostSource: EditPostSource(),
-        reportPostSource: ReportPostSource(),
-      ),
-    ),
-    RepositoryProvider(
       create: (BuildContext context) => CommentRepository(
         addCommentSource: AddCommentSource(),
         getCommentsSource: GetCommentsSource(),
@@ -141,6 +139,11 @@ dynamic _blocProviders = [
       context.read<RouteRepository>(),
     ),
   ),
+  BlocProvider(
+      create: (BuildContext context) =>
+          CheckEmailBloc(authRepository: context.read<AuthRepository>())
+      // Your RegisterPage widget
+      ),
   BlocProvider(
     create: (BuildContext context) => LoginBloc(
       context.read<AuthRepository>(),

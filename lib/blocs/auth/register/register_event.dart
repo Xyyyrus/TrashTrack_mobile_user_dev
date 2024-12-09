@@ -8,3 +8,9 @@ class RegisterAccountEvent extends RegisterEvent {
 
   RegisterAccountEvent(this.credential);
 }
+
+class CheckEmailUniqueEvent extends RegisterEvent {
+  final String email;
+
+  CheckEmailUniqueEvent(this.email); // Remove 'const'
+}
